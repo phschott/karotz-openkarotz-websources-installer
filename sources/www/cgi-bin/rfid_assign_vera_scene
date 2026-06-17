@@ -38,7 +38,7 @@ if [ "$TAG_ID" != "" ]; then
      echo $( echo "$NAME" | UrlDecode) > $CNF_DATADIR/Rfid/$TAG_ID.name
    fi 
    URL=$(BuildVeraUrl $VERA_IP $SCENE_ID)
-   echo $URL | base64 > $CNF_DATADIR/Rfid/$TAG_ID.action
+   echo $URL | busybox base64 > $CNF_DATADIR/Rfid/$TAG_ID.action
    
 fi
 

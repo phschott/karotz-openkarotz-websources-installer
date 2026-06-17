@@ -13,7 +13,7 @@ NAME=$name
 USR=$user
 PASS=$password
 
-PARAM=$(echo "$RAW_PARAM" | base64 -d )
+PARAM=$(echo "$RAW_PARAM" | busybox base64 -d )
 CheckMandatoryParameter "$URL" url
 
 URL=$(BuildUrl "$URL" "$PARAM" "$USR" "$PASS" 1)
