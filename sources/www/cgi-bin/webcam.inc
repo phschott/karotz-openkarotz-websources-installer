@@ -7,6 +7,6 @@ source /usr/www/cgi-bin/utils.inc
 function TakeSnapshot 
 {  
    Log  "Snapshot" "Taking Snapshot"
-   dbus-send --system --type=method_call --print-reply --dest=com.mindscape.karotz.Webcam /com/mindscape/karotz/Webcam com.mindscape.karotz.KarotzInterface.takeSnapshot string:1 string:"file" int32:50
+   dbus-send --system --type=method_call --print-reply --dest=com.mindscape.karotz.Webcam /com/mindscape/karotz/Webcam com.mindscape.karotz.KarotzInterface.takeSnapshot string:1 string:"file" int32:50 >/dev/null 2>/dev/null
 }         
    

@@ -138,15 +138,15 @@ fi
 
 function SendResponse {
    DT=${1}
-   echo "Server: OpenKarotz WebServer 1.0"
-   echo "Connection: close"
-   echo "Accept-Ranges: bytes"
-#   echo "Content-Length: "${#DT}
-   #echo "Content-type: application/json"
-   echo "Content-type: text/plain"
-   echo "Access-Control-Allow-Origin: *"
-   echo ""
-   echo -e $DT
+   printf "Server: OpenKarotz WebServer 1.0\r\n"
+   printf "Connection: close\r\n"
+   printf "Accept-Ranges: bytes\r\n"
+#   printf "Content-Length: %s\r\n" "${#DT}"
+   #printf "Content-type: application/json\r\n"
+   printf "Content-type: text/plain\r\n"
+   printf "Access-Control-Allow-Origin: *\r\n"
+   printf "\r\n"
+   printf "%s\n" "$DT"
 }
 
 

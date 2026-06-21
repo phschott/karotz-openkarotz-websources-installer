@@ -23,14 +23,14 @@ FNAME=${URLParam[filename]}
 #     DATA='{"return":"1","msg":"Unable to perform action, rabbit is already sleeping."}'
 #fi
 
-echo "Server: OpenKarotz WebServer 1.0 - Massalia 2013"
-echo "Connection: close"
-echo "Accept-Ranges: bytes"
-#echo "Content-Disposition: attachment; filename="$FNAME
-echo "Cache-Control: private"
-echo "Pragma: private"
-echo "Content-type: image/jpeg"
-echo ""
+printf "Server: OpenKarotz WebServer 1.0 - Massalia 2013\r\n"
+printf "Connection: close\r\n"
+printf "Accept-Ranges: bytes\r\n"
+#printf "Content-Disposition: attachment; filename=%s\r\n" "$FNAME"
+printf "Cache-Control: private\r\n"
+printf "Pragma: private\r\n"
+printf "Content-type: image/jpeg\r\n"
+printf "\r\n"
 
 if [ -e "/www/snapshots/$FNAME" ]; then
   cat "/www/snapshots/$FNAME"

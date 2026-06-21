@@ -28,11 +28,11 @@ if [ ! -e "/tmp/picture.jpg" ]; then
     exit 0
 fi
 
-echo "Server: OpenKarotz WebServer 1.0"
-echo "Connection: close"
-echo "Accept-Ranges: bytes"
-echo "Content-type: image/jpeg"
-echo "Access-Control-Allow-Origin: *"
-echo ""
+printf "Server: OpenKarotz WebServer 1.0\r\n"
+printf "Connection: close\r\n"
+printf "Accept-Ranges: bytes\r\n"
+printf "Content-type: image/jpeg\r\n"
+printf "Access-Control-Allow-Origin: *\r\n"
+printf "\r\n"
 cat /tmp/picture.jpg
 
