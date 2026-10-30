@@ -1,15 +1,93 @@
 #!/usr/bin/python
 # -*- coding:Utf-8 -*
-print("Content-Type: multipart/x-mixed-replace; boundary=--ffserver\r\n\r")
-
-import cgi
-import cgitb; cgitb.enable(display=1, logdir='/tmp')
+import sys
+import os
+import signal
+import cgitb; cgitb.enable(display=0, logdir='/tmp')
 import subprocess
 
+# En-tete CGI du flux MJPEG (entierement en CRLF, comme l'exige le parseur
+# strict de Safari). boundary=ffserver SANS tirets : le client cherche
+# "--" + boundary = "--ffserver", ce que nous emettons pour chaque image.
+sys.stdout.write("Content-Type: multipart/x-mixed-replace; boundary=ffserver\r\n\r\n")
+sys.stdout.flush()
+
+# --- Reglages de fluidite -------------------------------------------------
+#   CAM_SIZE : taille NATIVE de la camera. NE PAS changer : c'est la taille du
+#              flux brut rgb565 lu sur /dev/camera ; une autre valeur
+#              desynchronise la lecture et corrompt l'image.
+#   OUT_SIZE : taille de SORTIE (downscale apres capture). "320x240" = 4x moins
+#              d'octets a encoder/transmettre -> bien plus fluide.
+#              "" (chaine vide) = pas de downscale, on garde la taille native.
+#   FPS      : images/seconde (d'origine : 1). Monter tant que le CPU suit.
+#   QSCALE   : qualite JPEG (d'origine : 1). 1=net/lourd .. 31=leger ;
+#              monter (8-12) allege encore les images.
+CAM_SIZE = "640x480"
+OUT_SIZE = "320x240"
+FPS = "8"
+QSCALE = "6"
+# --------------------------------------------------------------------------
+
+# Marqueurs JPEG : SOI (debut d'image) et EOI (fin d'image).
+SOI = "\xff\xd8"
+EOI = "\xff\xd9"
+
 if __name__ == '__main__':
-	command = 'ffmpeg -f rawvideo -pix_fmt rgb565 -r 1 -s 640x480 -i /dev/camera -f mpjpeg -vcodec mjpeg -qscale 1 -r 1 pipe:1 2>/dev/null'
+	# "exec " : avec shell=True, sans lui p.pid serait celui du shell /bin/sh
+	# et non de ffmpeg -> on tuerait le shell en laissant ffmpeg orphelin, qui
+	# garderait /dev/camera ouvert (et ferait echouer les snapshots ensuite).
+	# "exec" remplace le shell par ffmpeg : p.pid = ffmpeg, kill fiable.
+	# -s CAM_SIZE AVANT -i : taille du flux brut en entree (native camera).
+	# -s OUT_SIZE APRES -i (optionnel) : downscale en sortie pour alleger.
+	scale = ("-s %s " % OUT_SIZE) if OUT_SIZE else ""
+	command = ('exec ffmpeg -f rawvideo -pix_fmt rgb565 -s %s -r %s -i /dev/camera '
+	           '%s-f mpjpeg -vcodec mjpeg -qscale %s -r %s pipe:1 2>/dev/null'
+	           % (CAM_SIZE, FPS, scale, QSCALE, FPS))
 	p = subprocess.Popen(command, stdout=subprocess.PIPE, bufsize=-1, shell=True)
-	while(p.poll() is None):
-        	stdoutdata = p.stdout.read(400200)
-                print(stdoutdata)
-                                                        
+
+	# On lit le flux ffmpeg et on en extrait les images JPEG une par une
+	# (entre FF D8 et FF D9), en ignorant les separateurs texte de ffmpeg.
+	# Chaque image est re-emise dans une partie multipart propre, en CRLF,
+	# avec Content-Length -> flux conforme que Safari sait afficher.
+	# NB : Python du Karotz tres ancien (< 2.5) -> pas de try/except/finally
+	# combine, et pas de p.terminate() (Python < 2.6). On reste portable.
+	buf = ""
+	try:
+		while p.poll() is None:
+			chunk = os.read(p.stdout.fileno(), 65536)
+			if not chunk:
+				break
+			buf += chunk
+			while True:
+				start = buf.find(SOI)
+				if start < 0:
+					# Pas de debut d'image : on evite que le buffer gonfle.
+					if len(buf) > 1000000:
+						buf = ""
+					break
+				end = buf.find(EOI, start + 2)
+				if end < 0:
+					# Image incomplete : on garde a partir du SOI et on attend.
+					if start > 0:
+						buf = buf[start:]
+					break
+				end += 2
+				frame = buf[start:end]
+				buf = buf[end:]
+				part = ("--ffserver\r\n"
+				        "Content-Type: image/jpeg\r\n"
+				        "Content-Length: %d\r\n"
+				        "\r\n" % len(frame))
+				sys.stdout.write(part)
+				sys.stdout.write(frame)
+				sys.stdout.write("\r\n")
+				sys.stdout.flush()
+	except Exception:
+		# Client deconnecte (broken pipe) ou autre : on sort de la boucle.
+		pass
+
+	# Tuer ffmpeg pour ne pas laisser de process orphelin qui sature le CPU.
+	try:
+		os.kill(p.pid, signal.SIGTERM)
+	except Exception:
+		pass
