@@ -7,6 +7,9 @@ source /usr/www/cgi-bin/utils.inc
 function TakeSnapshot 
 {  
    Log  "Snapshot" "Taking Snapshot"
-   dbus-send --system --type=method_call --print-reply --dest=com.mindscape.karotz.Webcam /com/mindscape/karotz/Webcam com.mindscape.karotz.KarotzInterface.takeSnapshot string:1 string:"file" int32:50
-}         
-   
+   # --print-reply rend l'appel synchrone (on attend que la photo soit ecrite
+   # avant de la lire), mais il ecrit la reponse D-Bus sur stdout : il faut la
+   # jeter, sinon elle contamine la reponse HTTP avant les en-tetes
+   # ("Parse Error: Invalid header token").
+   dbus-send --system --type=method_call --print-reply --dest=com.mindscape.karotz.Webcam /com/mindscape/karotz/Webcam com.mindscape.karotz.KarotzInterface.takeSnapshot string:1 string:"file" int32:50 >/dev/null 2>/dev/null
+}

@@ -19,6 +19,12 @@ There are two parts in `sources` directory:
 1. Copy the files in a place in your karotz
 1. Launch `bash install`
 
+## How to manually install on Karotz
+```shell
+ssh root@<ip-karotz> "cat > /tmp/package-openkarotz.zip" < /chemin/vers/package-openkarotz.zip
+```
+Modify script package-openkarotz.sh to use local file if it exists otherwise download default package without fix.
+
 ## Resources
 
 [http://www.openkarotz.org/](http://www.openkarotz.org/) : Openkarotz Project
