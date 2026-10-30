@@ -22,10 +22,9 @@ ftp.retrlines('LIST')     # list directory contents
 ftp.quit()
 
 
-print "Server: OpenKarotz WebServer 1.0 - Massalia 2013"
-print "Connection: close"
-print "Accept-Ranges: bytes"
-print "Status: 200 Ok"
-print ""
-print ""
+print "Server: OpenKarotz WebServer 1.0 - Massalia 2013\r"
+print "Connection: close\r"
+print "Accept-Ranges: bytes\r"
+print "Status: 200 Ok\r"
+print "\r"
 

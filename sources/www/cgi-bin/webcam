@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding:Utf-8 -*
-print("Content-Type: multipart/x-mixed-replace; boundary=--ffserver\n")
+print("Content-Type: multipart/x-mixed-replace; boundary=--ffserver\r\n\r")
 
 import cgi
 import cgitb; cgitb.enable(display=1, logdir='/tmp')

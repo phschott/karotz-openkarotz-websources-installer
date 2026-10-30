@@ -62,10 +62,10 @@ data["voicelanguage"] = voicelanguage
 data["voicegender"] = voicegender
 
 # Write Output Response
-print "Server: OpenKarotz WebServer 1.0"
-print "Connection: close"
-print "Accept-Ranges: bytes"
-print "Content-type: text/plain"
-print "Access-Control-Allow-Origin: *"
-print
+print "Server: OpenKarotz WebServer 1.0\r"
+print "Connection: close\r"
+print "Accept-Ranges: bytes\r"
+print "Content-type: text/plain\r"
+print "Access-Control-Allow-Origin: *\r"
+print "\r"
 print json.dumps(data)

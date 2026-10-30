@@ -33,11 +33,11 @@ SURL="http://karotz.filippi.org"
 
 ReadUrlParam
 
-echo "Server: OpenKarotz WebServer 1.0 - Massalia 2013"
-echo "Connection: close"
-echo "Accept-Ranges: bytes"
-echo "Content-type: text/plain"
-echo ""
+printf "Server: OpenKarotz WebServer 1.0 - Massalia 2013\r\n"
+printf "Connection: close\r\n"
+printf "Accept-Ranges: bytes\r\n"
+printf "Content-type: text/plain\r\n"
+printf "\r\n"
 
 # Checking Forced Update
 FU=${URLParam[force]}

@@ -1,0 +1,74 @@
+name: Build OpenKarotz package
+
+# Génère package-openkarotz.zip (le ZIP attendu par package-openkarotz.sh)
+# à chaque release publiée, et l'attache à la release.
+#
+# Structure produite, telle qu'attendue par package-openkarotz.sh :
+#   package-openkarotz.zip
+#   ├── openkarotzusr.zip   (contenu de sources/openkarotz/ -> /usr/openkarotz)
+#   └── openkarotzwww.zip   (contenu de sources/www/        -> /usr/www)
+
+on:
+  release:
+    types: [published]
+  # Permet aussi un déclenchement manuel pour tester le build sans release.
+  workflow_dispatch:
+
+permissions:
+  contents: write   # nécessaire pour attacher l'asset à la release
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install zip
+        run: sudo apt-get update && sudo apt-get install -y zip
+
+      - name: Build package-openkarotz.zip
+        run: |
+          set -euo pipefail
+
+          # Fichiers macOS / backups à ne jamais embarquer
+          EXCLUDES=(-x '*.DS_Store' -x '*~')
+
+          mkdir -p dist
+
+          # 1) Contenu de sources/openkarotz -> openkarotzusr.zip
+          #    (on zippe le CONTENU du dossier, pas le dossier lui-même,
+          #     pour que l'extraction donne /usr/openkarotz/Moods, etc.)
+          ( cd sources/openkarotz && zip -r -X "$GITHUB_WORKSPACE/dist/openkarotzusr.zip" . "${EXCLUDES[@]}" )
+
+          # 2) Contenu de sources/www -> openkarotzwww.zip
+          #    (extraction donne /usr/www/cgi-bin, /usr/www/index.html, etc.)
+          ( cd sources/www && zip -r -X "$GITHUB_WORKSPACE/dist/openkarotzwww.zip" . "${EXCLUDES[@]}" )
+
+          # 3) ZIP externe contenant les deux ZIP internes À LA RACINE,
+          #    pour que `unzip -d /tmp` donne /tmp/openkarotzusr.zip et
+          #    /tmp/openkarotzwww.zip.
+          ( cd dist && zip -X package-openkarotz.zip openkarotzusr.zip openkarotzwww.zip )
+
+          echo "----- Contenu de package-openkarotz.zip -----"
+          unzip -l dist/package-openkarotz.zip
+          echo "----- md5sum -----"
+          md5sum dist/package-openkarotz.zip
+
+      # Sur un déclenchement manuel : on expose le ZIP comme artifact
+      # téléchargeable depuis l'onglet Actions (pas de release à attacher).
+      - name: Upload build artifact (manuel)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: package-openkarotz
+          path: dist/package-openkarotz.zip
+
+      # Sur une release : on attache package-openkarotz.zip à la release.
+      - name: Attach to release
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload "${{ github.event.release.tag_name }}" \
+            dist/package-openkarotz.zip --clobber
