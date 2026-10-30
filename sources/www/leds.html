@@ -41,10 +41,6 @@ return r + g + b;
 		$(el).val(hex);
 		$(el).ColorPickerHide();
 		},
-
-                onChange: function (hsb, hex, rgb) { 
-                $("#colorpickerField1").val(hex);
-                },
 		
 		onBeforeShow: function () {
 		$(this).ColorPickerSetColor(this.value);
@@ -60,10 +56,6 @@ return r + g + b;
 		$(el).val(hex);
 		$(el).ColorPickerHide();
 		},
-
-                onChange: function (hsb, hex, rgb) { 
-                $("#colorpickerField2").val(hex);
-                },
 		
 		onBeforeShow: function () {
 		$(this).ColorPickerSetColor(this.value);

@@ -6,10 +6,10 @@ source /www/cgi-bin/utils.inc
 
 VERSION=$CNF_VERSION
 
-if [ ! -e "/karotz/etc/ok_rootfs_version" ]; then
+if [ ! -e "/karotz/etc/rootfs_version" ]; then
   RVERSION="Unknown"
 else
-  RVERSION=$(cat /karotz/etc/ok_rootfs_version)
+  RVERSION=$(cat /karotz/etc/rootfs_version)
 fi
 
 if [ ! -e "/www/ok_patch" ]; then

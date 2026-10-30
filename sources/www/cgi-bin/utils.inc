@@ -384,22 +384,21 @@ function PlaySound {
 function PlaySoundEx { 
 #SOUND $1
 #BG    $2
-
-      # TODO : Volume management
-      # -softvol -af volume=-20
-      #  0  => Normal
-      #  -x => Down
-      #  +x => Up 
+# TODO : Volume management
+# -softvol -af volume=-20
+#  0  => Normal
+#  -x => Down
+#  +x => Up 
    CHECK=$(IsSoundPlaying)
    if [ $CHECK -eq 0 ]; then
         KillProcess SOUNDS
         if [ ! -f /tmp/mplayer-control ]; then
           mknod /tmp/mplayer-control p  >>/dev/null 2>>/dev/null
         fi
-        if [ "$2" == "1" ]; then                
-          mplayer -quiet -slave -include /etc/conf/mplayer.conf -input file=/tmp/mplayer-control $1 >>/dev/null 2>>/dev/null & 
+        if [ "$2" == "1" ]; then
+          mplayer -quiet -slave -input file=/tmp/mplayer-control $1 >>/dev/null 2>>/dev/null & 
         else
-          mplayer -quiet -slave -include /etc/conf/mplayer.conf -input file=/tmp/mplayer-control $1 >>/dev/null 2>>/dev/null
+          mplayer -quiet -slave -input file=/tmp/mplayer-control $1 >>/dev/null 2>>/dev/null
         fi
    fi
 }                                            

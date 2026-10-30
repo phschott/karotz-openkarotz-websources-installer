@@ -27,7 +27,7 @@ curl -l "http://192.168.253.196/cgi-bin/sound?id=/Chiffres/168"
 
 #SendResponse ""
 #echo $url
-#URL=`echo $url | base64 -d`
+#URL=`echo $url | busybox base64 -d`
 #URL="curl -L -k -s -o /tmp/curlout \""$URL"\""
 #eval $URL
 #PARAM=$(echo $url | UrlEncode )

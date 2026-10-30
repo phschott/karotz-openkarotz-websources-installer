@@ -1,76 +1,71 @@
-#!/bin/bash
+#!/usr/bin/python
 
-source /www/cgi-bin/setup.inc
-source /www/cgi-bin/url.inc
-source /www/cgi-bin/utils.inc
-source /www/cgi-bin/tts.inc
+# Text To Speech with Python, powered by ResponsiveVoice (https://responsivevoice.org) cached by Free Rabbits.
+# Save this file as "tts" in /www/cgi-bin, and delete tts.inc.
+# Also update "voice_list" with the corresponding voicenames.
+# Provided by FreeRabbits.nl
 
-KillProcess SOUNDS
-ReadUrlParam
+import cgi
+import os
+import sys
+import urllib
+import md5
+import simplejson as json
 
-TTS=${URLParam[text]} 
-RAW_VOICE=${URLParam[voice]}
-SPEED=${URLParam[speed]}
-NO_CACHE=${URLParam[nocache]}
-MUTE=${URLParam[mute]}
+def RunCommand(cmd):
+    return os.system(cmd)
 
-CheckMandatoryDirectory "$CNF_DATADIR/Tmp"
-#CheckMandatoryParameter "$RAW_VOICE" voice
-CheckMandatoryParameter "$TTS" text
+def IsSleeping():
+    return os.path.isfile("/tmp/karotz.sleep") or os.path.isfile("/usr/openkarotz/Run/karotz.sleep")
 
-# TTS ENGINE
-# Use ACAPELA Engine by default
-# 0 ACAPELA
-# 1 GOOGLE
-# 2 VIOLET
-TTS_ENGINE=${URLParam[engine]}
+def PlayMP3(mp3file):
+    if not IsSleeping():
+        cmd = "/usr/bin/madplay " + mp3file + " >/dev/null 2>&1"
+        return os.system(cmd)
 
-PLAYED=0
-CACHE=0
-if [ "$TTS" == "" ] ; then
-   DATA='{"return":"1","msg":"Missing mandatory parameter(s)."}'
-   SendResponse "$DATA"
-   exit 0
-fi
+# Main program
+voice = 0
+voices = [ "fr", "fr", "fr", "fr", "en-US", "en-US", "en-GB", "en-GB", "de", "de", "it", "it", "es", "es", "nl", "nl", "af", "af", "sq", "sq", "ar", "ar", "hy", "hy", "bs", "bs", "pt-BR", "pt-BR", "hr", "hr", "cs", "cs", "da", "da", "en-AU", "en-AU", "eo", "eo", "fi", "fi", "el", "el", "ht", "ht", "hi", "hi", "hu", "hu", "is", "is", "id", "id", "ja", "ja", "ko", "ko", "la", "la", "no", "no", "pl", "pl", "pt-PT", "pt-PT", "ro", "ro", "ru", "ru", "sr", "sr", "sh", "sh", "sk", "sk", "sw", "sw", "sv", "sv", "ta", "ta", "th", "th", "tr", "tr", "vi", "vi", "cy", "cy" ]
+voicelanguage = "fr"
+voicegender = "female"
+md5Hash = ""
+cached = False
+cmd = ""
+result = 1
+fields = cgi.FieldStorage()
 
-if [ ! -e "$CNF_DATADIR/Run/karotz.sleep" ]; then  
-   if [ "$RAW_VOICE" == "" ]; then
-      RAW_VOICE="margaux"  
-   fi
-   VOICE=$RAW_VOICE"22k"
+if "voice" in fields:
+    voice = int(fields["voice"].value)
+    voicelanguage = voices[voice - 1]
+    voicegender = (voice % 2 == 0) and "female" or "male"
 
-   if [ "$MUTE" == "" ]; then
-         MUTE=0
-   fi
+if "text" in fields:
+    text = fields["text"].value
+    md5Hash = md5.new(voicelanguage + voicegender + text).hexdigest()
+    mp3FileName = "/tmp/" + md5Hash + ".mp3"
+    cached = os.path.isfile(mp3FileName)
+    if not cached:
+        params = urllib.urlencode({"language": voicelanguage, "gender": voicegender, "text": text})
+        baseUrl = "http://www.freerabbits.nl/service/KarotzRvTTS"
+        cmd = "wget -q -O %(mp3)s \"%(url)s?%(params)s\"" % { "mp3": mp3FileName, "url": baseUrl, "params": params }
+        result = RunCommand(cmd)
+    if os.path.isfile(mp3FileName):
+        result = PlayMP3(mp3FileName)
 
-   if [ "$NO_CACHE" == "" ]; then
-         NO_CACHE=0
-   fi
-   
-   if [ "$TTS_ENGINE" == "" ]; then
-       TTS_ENGINE=0
-   fi 
+# Create the JSON object
+data = {}
+data["return"] = (result == 0)
+data["id"] = md5Hash
+data["played"] = (result == 0)
+data["cache"] = cached
+data["voicelanguage"] = voicelanguage
+data["voicegender"] = voicegender
 
-   MD5FILE=$(echo "$TTS$VOICE" | md5sum | cut -d ' ' -f 1)
-   if [ -e "$CNF_DATADIR/Tmp/${MD5FILE}.txt"  ] && [ "$NO_CACHE" == "0"  ]; then
-      CACHE=1
-      if [ "$MUTE" != "1" ]; then 
-        Log "[TTS]"  "Playing sound ${MD5FILE}.mp3 from cache"
-        PlaySound $CNF_DATADIR/Tmp/${MD5FILE}.mp3
-      fi
-   else
-       case $TTS_ENGINE in                                                                                                                                                                             
-             1)  MP3_ID=$(GoogleTTS $TTS $VOICE $NO_CACHE $RAW_VOICE);;                                                                                                                                                                
-             2)  MP3_ID=$(VioletTTS $TTS $VOICE $NO_CACHE $RAW_VOICE);;                                                                                                                                                                 
-             *)  MP3_ID=$(AcapelaTTS $TTS $VOICE $NO_CACHE $RAW_VOICE $MUTE);;          
-       esac
-   fi
-   PLAYED=1
-   DATA='{"id":"'$MP3_ID'","played":"'$PLAYED'","cache":"'$CACHE'","return":"'$?'","voice":"'$RAW_VOICE'","mute":"'$MUTE'"}'
-else
-   DATA='{"return":"1","msg":"Unable to perform action, rabbit is sleeping."}'
-fi
-
-SendResponse "$DATA"
-
-
+# Write Output Response
+print "Server: OpenKarotz WebServer 1.0"
+print "Connection: close"
+print "Accept-Ranges: bytes"
+print "Content-type: text/plain"
+print "Access-Control-Allow-Origin: *"
+print
+print json.dumps(data)

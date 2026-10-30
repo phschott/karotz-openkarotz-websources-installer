@@ -42,7 +42,7 @@ if [ ! -e "/tmp/picture.jpg" ]; then
       exit 0
 fi
 
-ftpput -u $FTP_USER -p $FTP_PASS $SERVER $FTP_DIR/$FN.jpg /tmp/picture.jpg 2> /tmp/ftperror
+busybox ftpput -u $FTP_USER -p $FTP_PASS $SERVER $FTP_DIR/$FN.jpg /tmp/picture.jpg 2> /tmp/ftperror
 if [ $? -eq 0 ]; then
   DATA='{"filename":"'$FN'.jpg","return":"0"}'
 else

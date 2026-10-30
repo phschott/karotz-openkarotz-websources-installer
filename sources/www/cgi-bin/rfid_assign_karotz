@@ -10,7 +10,7 @@ CheckMandatoryParameter "$tag" tag
 CheckMandatoryParameter "$url" url
 
 TAG_ID=$tag
-URL=`echo $url | base64 -d`
+URL=`echo $url | busybox base64 -d`
 URL="curl -L -k -s -o /tmp/curlout \""$URL"\""
 
 if [ ! -e "$CNF_DATADIR/Rfid/$TAG_ID.rfid" ]; then
@@ -28,7 +28,7 @@ rm -f $CNF_DATADIR/Rfid/$TAG_ID.name >>/dev/null 2>>/dev/null
 if [ "$TAG_ID" != "" ]; then
   echo $TYPE_KAROTZ > $CNF_DATADIR/Rfid/$TAG_ID.cmd          
   echo "-1" > $CNF_DATADIR/Rfid/$TAG_ID.var
-  echo $URL | base64  > $CNF_DATADIR/Rfid/$TAG_ID.action
+  echo $URL | busybox base64  > $CNF_DATADIR/Rfid/$TAG_ID.action
 fi
 
 DATA='{"return":"0"}'
